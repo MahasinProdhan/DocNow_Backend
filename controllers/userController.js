@@ -2,6 +2,7 @@ import validator from "validator";
 import bcrypt from "bcrypt";
 import userModel from "../models/userModel.js";
 import jwt from "jsonwebtoken";
+import { v2 as cloudinary } from "cloudinary";
 
 //.....📍API TO REGISTER USER📍.....
 
@@ -89,4 +90,78 @@ const getProfile = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
-export { registerUser, loginUser, getProfile };
+
+// //.....📍API TO UPDATE USE RPROFILE DATA📍.....
+// const updateProfile = async (req, res) => {
+//   try {
+//     const { userId, name, email, phone, address, dob, gender } = req.body;
+//     const imageFile = req.file;
+
+//     if (!name || !phone || !gender || !dob) {
+//       return res.json({ success: false, message: "Missing Data" });
+//     }
+
+//     await userModel.findByIdAndUpdate(userId, {
+//       name,
+//       phone,
+
+//       address: JSON.parse(address),
+//       dob,
+//       gender,
+//     });
+//     if (imageFile) {
+//       //upload image to cloudinary
+//       const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+//         resource_type: "image",
+//       });
+//       const imageURL = imageUpload.secure_url;
+//       await userModel.findByIdAndUpdate(userId, { image: imageURL });
+//     }
+//     return res.json({ success: true, message: "Profile Updated" });
+//   } catch (error) {
+//     console.log(error);
+//     return res.json({ success: false, message: error.message });
+//   }
+// };
+
+const updateProfile = async (req, res) => {
+  try {
+    console.log("HEADERS:", req.headers["content-type"]);
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
+    console.log("USER ID:", req.userId);
+    const { name, email, phone, address, dob, gender } = req.body;
+    const imageFile = req.file;
+
+    const userId = req.userId; // ✅ from middleware
+
+    if (!name || !phone || !gender || !dob) {
+      return res.json({ success: false, message: "Missing Data" });
+    }
+
+    await userModel.findByIdAndUpdate(userId, {
+      name,
+      phone,
+      address: JSON.parse(address),
+      dob,
+      gender,
+    });
+
+    if (imageFile) {
+      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+        resource_type: "image",
+      });
+
+      await userModel.findByIdAndUpdate(userId, {
+        image: imageUpload.secure_url,
+      });
+    }
+
+    return res.json({ success: true, message: "Profile Updated" });
+  } catch (error) {
+    console.log(error);
+    return res.json({ success: false, message: error.message });
+  }
+};
+
+export { registerUser, loginUser, getProfile, updateProfile };
