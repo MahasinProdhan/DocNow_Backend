@@ -93,39 +93,7 @@ const getProfile = async (req, res) => {
   }
 };
 
-// //.....📍API TO UPDATE USE RPROFILE DATA📍.....
-// const updateProfile = async (req, res) => {
-//   try {
-//     const { userId, name, email, phone, address, dob, gender } = req.body;
-//     const imageFile = req.file;
-
-//     if (!name || !phone || !gender || !dob) {
-//       return res.json({ success: false, message: "Missing Data" });
-//     }
-
-//     await userModel.findByIdAndUpdate(userId, {
-//       name,
-//       phone,
-
-//       address: JSON.parse(address),
-//       dob,
-//       gender,
-//     });
-//     if (imageFile) {
-//       //upload image to cloudinary
-//       const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
-//         resource_type: "image",
-//       });
-//       const imageURL = imageUpload.secure_url;
-//       await userModel.findByIdAndUpdate(userId, { image: imageURL });
-//     }
-//     return res.json({ success: true, message: "Profile Updated" });
-//   } catch (error) {
-//     console.log(error);
-//     return res.json({ success: false, message: error.message });
-//   }
-// };
-
+//     .....📍API TO UPDATE USER PROFILE DATA📍.....
 const updateProfile = async (req, res) => {
   try {
     console.log("HEADERS:", req.headers["content-type"]);
@@ -215,4 +183,24 @@ const bookAppointment = async (req, res) => {
   }
 };
 
-export { registerUser, loginUser, getProfile, updateProfile, bookAppointment };
+//.....📍API TO GET USER APPOINTMENTS FOR FRONTEND USER APPOINTMENT PAGE📍.....
+const listAppointment = async (req, res) => {
+  try {
+    // const { userId } = req.body; was reason of a big error
+    const userId = req.userId;
+    const appointments = await appointmentModel.find({ userId });
+    res.json({ success: true, appointments });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export {
+  registerUser,
+  loginUser,
+  getProfile,
+  updateProfile,
+  bookAppointment,
+  listAppointment,
+};
