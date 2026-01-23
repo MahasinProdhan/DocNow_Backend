@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
+import razorpay from "razorpay";
 
 //.....📍API TO REGISTER USER📍.....
 
@@ -196,7 +197,7 @@ const listAppointment = async (req, res) => {
   }
 };
 
-//       .....📍      API TO CANCEL APPOINTMENT        📍.....
+//       .....📍API TO CANCEL APPOINTMENT📍.....
 const cancelAppointment = async (req, res) => {
   try {
     const userId = req.userId;
@@ -231,6 +232,43 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
+// .....📍API TO MAKE PAYMENT OF APPOINTMENT USING RAZORPAY📍.....
+
+const paymentRazorpay = async (req, res) => {
+  try {
+    const { appointmentId } = req.body;
+    console.log("appointmentid", appointmentId);
+    const appointmentData = await appointmentModel.findById(appointmentId);
+    console.log("KEY_ID:", process.env.RAZORPAY_KEY_ID);
+    console.log("KEY_SECRET:", process.env.RAZORPAY_KEY_SECRET);
+    // console.log("appoint ment data", appointmentData);
+    if (!appointmentId || appointmentData.cancelled) {
+      return res.json({
+        success: false,
+        message: "Appointment Cancelled or not found",
+      });
+    }
+    const razorpayInstance = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID, // from Razorpay Dashboard
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+    // creating options for razorpay payment
+    const options = {
+      amount: appointmentData.amount * 10,
+      currency: process.env.CURRENCY || "INR",
+      receipt: appointmentId,
+    };
+
+    // creation of an order
+    const order = await razorpayInstance.orders.create(options);
+    console.log("order", order);
+    res.json({ success: true, order });
+  } catch (error) {
+    console.log("error", error);
+    return res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   registerUser,
   loginUser,
@@ -239,4 +277,5 @@ export {
   bookAppointment,
   listAppointment,
   cancelAppointment,
+  paymentRazorpay,
 };
